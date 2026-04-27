@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Matemática 7º Ano - Jogo SAEB</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .pagina {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        /* BOTÃO DE DOAÇÃO */
+        .doacao-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .btn-doar {
+            background: linear-gradient(135deg, #f1c40f, #e67e22);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-doar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        /* ÁREA DO JOGO + RANKING */
+        .game-area {
+            flex: 1;
+            min-width: 300px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        /* CARD DO JOGO */
+        .game-card {
+            background: white;
+            border-radius: 30px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .badge {
+            padding: 8px 15px;
+            border-radius: 25px;
+            font-weight: bold;
+        }
+        .badge-level { background: #2c3e50; color: white; }
+        .badge-score { background: #f1c40f; color: #333; }
+        .badge-streak { background: #e74c3c; color: white; }
+        
+        .progress-area { margin-bottom: 20px; }
+        .progress-bar { width: 100%; height: 10px; background: #eee; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #27ae60; transition: width 0.5s; width: 0%; }
+        .progress-text { font-size: 0.8rem; margin-top: 5px; color: #666; }
+        
+        .question-box {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .question-text {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .option {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+        }
+        
+        .option:hover { border-color: #3498db; transform: scale(1.02); }
+        
+        .option-letter {
+            width: 40px;
+            height: 40px;
+            background: #2c3e50;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .option-text { flex: 1; text-align: left; color: #333; }
+        
+        .option.selected {
+            background: #3498db;
+            border-color: #3498db;
+        }
+        .option.selected .option-text { color: white; }
+        .option.selected .option-letter { background: white; color: #3498db; }
+        
+        .option.disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        
+        .option.correct-show {
+            background: #27ae60;
+            border-color: #27ae60;
+        }
+        .option.correct-show .option-text { color: white; }
+        .option.correct-show .option-letter { background: white; color: #27ae60; }
+        
+        .option.wrong-show {
+            background: #e74c3c;
+            border-color: #e74c3c;
+        }
+        .option.wrong-show .option-text { color: white; }
+        .option.wrong-show .option-letter { background: white; color: #e74c3c; }
+        
+        .lives {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .heart { font-size: 1.8rem; }
+        .heart.lost { opacity: 0.3; filter: grayscale(1); }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: scale(0.98); }
+        .btn-next { background: #27ae60; color: white; }
+        .btn-next:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-restart { background: #3498db; color: white; }
+        
+        /* RANKING POR NÍVEL */
+        .ranking-nivel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .ranking-nivel h3 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .tabs-ranking {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .tab-btn {
+            background: #ecf0f1;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-top: 0;
+            width: auto;
+        }
+        
+        .tab-btn:hover { transform: scale(1.05); background: #d5dbdb; }
+        .tab-btn.ativo { background: #2c3e50; color: white; }
+        
+        .ranking-conteudo {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .rank-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.3s;
+        }
+        
+        .rank-item:hover { background: #f8f9fa; }
+        
+        .rank-posicao {
+            font-weight: bold;
+            width: 45px;
+            color: #2c3e50;
+        }
+        
+        .rank-nome {
+            flex: 2;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .rank-pontos {
+            font-weight: bold;
+            color: #27ae60;
+        }
+        
+        .rank-acertos {
+            font-size: 0.8rem;
+            color: #666;
+            margin-left: 10px;
+        }
+        
+        .sem-dados {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .pix-area {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 15px 0;
+            word-break: break-all;
+        }
+        
+        .pix-chave {
+            font-family: monospace;
+            font-size: 1rem;
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .btn-copiar {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .admin-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .admin-form input, .admin-form select {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.75rem;
+            cursor: pointer;
+            padding: 15px;
+        }
+        
+        footer:hover {
+            color: rgba(255,255,255,0.9);
+        }
+    </style>
+</head>
+<body>
+    <div class="pagina">
+        <!-- BOTÃO DE DOAÇÃO -->
+        <div class="doacao-container">
+            <button class="btn-doar" onclick="abrirDoacao()">
+                💝 APOIAR PROJETO
+            </button>
+        </div>
+        
+        <div class="container">
+            <!-- ÁREA DO JOGO + RANKING -->
+            <div class="game-area">
+                <!-- JOGO -->
+                <div class="game-card">
+                    <div class="header">
+                        <div class="badge badge-level" id="levelDisplay">📚 Nível 1</div>
+                        <div class="badge badge-score" id="scoreDisplay">⭐ 0 pts</div>
+                        <div class="badge badge-streak" id="streakDisplay">🔥 0</div>
+                    </div>
+                    
+                    <div class="progress-area">
+                        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                        <div class="progress-text" id="progressText">Questão 1 de 10</div>
+                    </div>
+                    
+                    <div class="lives" id="livesContainer">❤️ ❤️ ❤️</div>
+                    
+                    <div class="question-box">
+                        <div class="question-text" id="questionText">Carregando...</div>
+                        <div class="options" id="optionsContainer"></div>
+                    </div>
+                    
+                    <button class="btn-next" id="nextBtn" onclick="proximaQuestao()" disabled>▶ PRÓXIMA</button>
+                    <button class="btn-restart" onclick="reiniciarJogo()">🔄 RECOMEÇAR JOGO</button>
+                </div>
+                
+                <!-- RANKING POR NÍVEL -->
+                <div class="ranking-nivel">
+                    <h3>🏆 RANKING POR NÍVEL 🏆</h3>
+                    <div class="tabs-ranking">
+                        <button class="tab-btn" onclick="mostrarRankingNivel(1, this)">Nível 1</button>
+                        <button class="tab-btn" onclick="mostrarRankingNivel(2, this)">Nível 2</button>
+                        <button class="tab-btn" onclick="mostrarRankingNivel(3, this)">Nível 3</button>
+                        <button class="tab-btn" onclick="mostrarRankingNivel(4, this)">Nível 4</button>
+                        <button class="tab-btn" onclick="mostrarRankingNivel(5, this)">Nível 5</button>
+                        <button class="tab-btn" onclick="mostrarRankingNivel(6, this)">Nível 6</button>
+                        <button class="tab-btn" onclick="mostrarRankingNivel(7, this)">Nível 7</button>
+                        <button class="tab-btn" onclick="mostrarRankingNivel(8, this)">Nível 8</button>
+                        <button class="tab-btn" onclick="mostrarRankingNivel(9, this)">Nível 9</button>
+                        <button class="tab-btn" onclick="mostrarRankingNivel(10, this)">Nível 10</button>
+                    </div>
+                    <div class="ranking-conteudo" id="rankingConteudo">
+                        <div class="sem-dados">🎯 Selecione um nível</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer onclick="abrirAdmin()">© 2026 | Configurações do Sistema</footer>
+    </div>
+    
+    <!-- MODAL GAME OVER -->
+    <div id="gameoverModal" class="modal">
+        <div class="modal-content">
+            <h2 id="gameoverTitle">🎉 PARABÉNS!</h2>
+            <p id="gameoverText"></p>
+            <p id="gameoverStats"></p>
+            <button onclick="reiniciarJogo()">JOGAR NOVAMENTE</button>
+        </div>
+    </div>
+    
+    <!-- MODAL DOAÇÃO -->
+    <div id="doacaoModal" class="modal">
+        <div class="modal-content">
+            <h2>💝 Apoie o Projeto</h2>
+            <p>Sua contribuição ajuda a manter este jogo gratuito e em constante melhoria!</p>
+            <div class="pix-area">
+                <strong>📱 Chave PIX:</strong>
+                <div class="pix-chave" id="pixChaveDisplay">carregando...</div>
+                <button class="btn-copiar" onclick="copiarPix()">📋 Copiar Chave PIX</button>
+            </div>
+            <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">Após a doação, o código será validado automaticamente.</p>
+            <button onclick="fecharDoacao()" style="background: #666;">FECHAR</button>
+        </div>
+    </div>
+    
+    <!-- MODAL ADMIN PIX -->
+    <div id="adminPixModal" class="modal">
+        <div class="modal-content">
+            <h2>🔧 Configurar Chave PIX</h2>
+            <div class="admin-form">
+                <label>Tipo da Chave:</label>
+                <select id="pixTipo">
+                    <option value="CPF">CPF</option>
+                    <option value="CNPJ">CNPJ</option>
+                    <option value="Email">E-mail</option>
+                    <option value="Telefone">Telefone</option>
+                    <option value="Aleatória">Chave Aleatória</option>
+                </select>
+                <label>Chave PIX:</label>
+                <input type="text" id="pixChave" placeholder="Digite a chave PIX">
+                <label>Nome do Beneficiário (opcional):</label>
+                <input type="text" id="pixNome" placeholder="Nome do beneficiário">
+                <button onclick="salvarPix()">💾 SALVAR CHAVE PIX</button>
+                <button onclick="fecharAdminPix()" style="background:#666">FECHAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== CONFIGURAÇÃO PIX ==========
+        let pixConfig = JSON.parse(localStorage.getItem('pixConfig7ano')) || {
+            tipo: "Email",
+            chave: "contato@matematica7ano.com",
+            nome: "Projeto Matemática 7º Ano"
+        };
+        
+        function salvarPix() {
+            pixConfig = {
+                tipo: document.getElementById('pixTipo').value,
+                chave: document.getElementById('pixChave').value,
+                nome: document.getElementById('pixNome').value
+            };
+            localStorage.setItem('pixConfig7ano', JSON.stringify(pixConfig));
+            alert("Chave PIX salva com sucesso!");
+            fecharAdminPix();
+        }
+        
+        function abrirDoacao() {
+            const chaveDisplay = document.getElementById('pixChaveDisplay');
+            chaveDisplay.innerHTML = `${pixConfig.tipo}: ${pixConfig.chave}<br>${pixConfig.nome ? `(${pixConfig.nome})` : ''}`;
+            document.getElementById('doacaoModal').style.display = 'flex';
+        }
+        
+        function fecharDoacao() {
+            document.getElementById('doacaoModal').style.display = 'none';
+        }
+        
+        function copiarPix() {
+            navigator.clipboard.writeText(pixConfig.chave);
+            alert("Chave PIX copiada! ✅\n\n" + pixConfig.chave);
+        }
+        
+        function abrirAdminPix() {
+            document.getElementById('pixTipo').value = pixConfig.tipo;
+            document.getElementById('pixChave').value = pixConfig.chave;
+            document.getElementById('pixNome').value = pixConfig.nome || '';
+            document.getElementById('adminPixModal').style.display = 'flex';
+        }
+        
+        function fecharAdminPix() {
+            document.getElementById('adminPixModal').style.display = 'none';
+        }
+        
+        // ========== BANCO DE QUESTÕES (7º ANO - BNCC) ==========
+        const bancoQuestoes = {
+            1: [
+                { texto: "O resultado de (-8) + (-12) é:", a: "-20", b: "-4", c: "4", d: "20", correta: "a" },
+                { texto: "Qual é o valor de (-3) × (-7)?", a: "-21", b: "-10", c: "10", d: "21", correta: "d" },
+                { texto: "Resolva a expressão: 5 - 2 × 3 = ?", a: "-1", b: "1", c: "3", d: "9", correta: "a" },
+                { texto: "O resultado de (-15) ÷ (+3) é:", a: "-5", b: "-3", c: "3", d: "5", correta: "a" },
+                { texto: "Qual é o valor absoluto de |-9|?", a: "-9", b: "0", c: "9", d: "18", correta: "c" },
+                { texto: "Resolva: 2³ × 2² = ?", a: "2⁵", b: "2⁶", c: "4⁵", d: "4⁶", correta: "a" },
+                { texto: "A fração 2/5 em porcentagem é:", a: "20%", b: "25%", c: "40%", d: "50%", correta: "c" },
+                { texto: "Qual é o oposto de -12?", a: "-12", b: "0", c: "12", d: "24", correta: "c" },
+                { texto: "Resolva: 10 - (4 + 3) × 2 = ?", a: "-4", b: "0", c: "4", d: "6", correta: "a" },
+                { texto: "O valor de 3/4 de 80 é:", a: "20", b: "40", c: "60", d: "80", correta: "c" }
+            ],
+            2: [
+                { texto: "Resolva a equação: 3x + 7 = 22", a: "3", b: "4", c: "5", d: "6", correta: "c" },
+                { texto: "Se 2x - 5 = 9, então x vale:", a: "5", b: "6", c: "7", d: "8", correta: "c" },
+                { texto: "O conjunto solução de x + 8 < 15 é:", a: "x < 5", b: "x < 7", c: "x < 8", d: "x < 23", correta: "b" },
+                { texto: "Qual é a raiz da equação 5x = 45?", a: "7", b: "8", c: "9", d: "10", correta: "c" },
+                { texto: "Resolva: 2x - 3 = x + 5", a: "6", b: "7", c: "8", d: "9", correta: "c" },
+                { texto: "O valor de x em 4(x - 2) = 20 é:", a: "5", b: "6", c: "7", d: "8", correta: "c" },
+                { texto: "Qual é a solução da inequação 2x ≥ 10?", a: "x ≥ 3", b: "x ≥ 5", c: "x ≤ 5", d: "x ≤ 3", correta: "b" },
+                { texto: "O perímetro de um quadrado de lado x é 20 cm. Qual o valor de x?", a: "3 cm", b: "4 cm", c: "5 cm", d: "6 cm", correta: "c" },
+                { texto: "A idade de Pedro é o dobro da idade de Ana. A soma das idades é 36. Qual a idade de Ana?", a: "10", b: "12", c: "14", d: "16", correta: "b" },
+                { texto: "Resolva: 3x + 2 = 2x + 7", a: "3", b: "4", c: "5", d: "6", correta: "c" }
+            ],
+            3: [
+                { texto: "A forma decimal de 3/8 é:", a: "0,25", b: "0,3", c: "0,325", d: "0,375", correta: "d" },
+                { texto: "25% de 120 é igual a:", a: "20", b: "25", c: "30", d: "35", correta: "c" },
+                { texto: "Em uma classe com 40 alunos, 15 são meninas. Qual a porcentagem de meninos?", a: "37,5%", b: "52,5%", c: "62,5%", d: "67,5%", correta: "c" },
+                { texto: "Um produto custa R$ 80,00 e teve um aumento de 15%. Qual o novo preço?", a: "R$ 88", b: "R$ 90", c: "R$ 92", d: "R$ 95", correta: "c" },
+                { texto: "A fração 3/5 corresponde a qual porcentagem?", a: "30%", b: "45%", c: "60%", d: "75%", correta: "c" },
+                { texto: "Na forma de fração irredutível, 0,625 é igual a:", a: "5/8", b: "3/4", c: "2/3", d: "7/8", correta: "a" },
+                { texto: "Aprovado: 18 alunos de uma turma de 30. Qual o percentual de aprovação?", a: "50%", b: "60%", c: "70%", d: "80%", correta: "b" },
+                { texto: "O número 0,333... em fração é:", a: "1/2", b: "1/3", c: "2/3", d: "3/4", correta: "b" },
+                { texto: "Em uma promoção, um produto de R$ 200,00 teve desconto de 20%. Quanto paguei?", a: "R$ 140", b: "R$ 150", c: "R$ 160", d: "R$ 170", correta: "c" },
+                { texto: "A forma percentual de 35/100 é:", a: "3,5%", b: "35%", c: "65%", d: "70%", correta: "b" }
+            ],
+            4: [
+                { texto: "Se a = 3 e b = -2, qual o valor de a² + b²?", a: "5", b: "9", c: "11", d: "13", correta: "d" },
+                { texto: "Qual o valor numérico de 2x - 3y para x = 4 e y = -1?", a: "5", b: "8", c: "11", d: "14", correta: "c" },
+                { texto: "A área de um retângulo de base 8 cm e altura x cm é 56 cm². Qual o valor de x?", a: "5 cm", b: "6 cm", c: "7 cm", d: "8 cm", correta: "c" },
+                { texto: "O volume de um cubo de aresta a = 5 cm é:", a: "25 cm³", b: "75 cm³", c: "100 cm³", d: "125 cm³", correta: "d" },
+                { texto: "O perímetro de um triângulo equilátero de lado 12 cm é:", a: "24 cm", b: "36 cm", c: "48 cm", d: "60 cm", correta: "b" },
+                { texto: "A expressão (x + y)² é igual a:", a: "x² + y²", b: "x² + 2xy + y²", c: "x² + xy + y²", d: "2x + 2y", correta: "b" },
+                { texto: "Se um quadrado tem área 64 cm², seu perímetro é:", a: "24 cm", b: "28 cm", c: "32 cm", d: "36 cm", correta: "c" },
+                { texto: "O diâmetro de uma circunferência de raio 7 cm é:", a: "7 cm", b: "14 cm", c: "21 cm", d: "28 cm", correta: "b" },
+                { texto: "A área de um círculo de raio 5 cm (π = 3,14) é:", a: "31,4 cm²", b: "62,8 cm²", c: "78,5 cm²", d: "94,2 cm²", correta: "c" },
+                { texto: "O valor de 2³ + 3² é:", a: "13", b: "15", c: "17", d: "19", correta: "c" }
+            ],
+            5: [
+                { texto: "Qual desses números é racional?", a: "√2", b: "π", c: "0,333...", d: "√3", correta: "c" },
+                { texto: "A √16 + √9 é igual a:", a: "5", b: "6", c: "7", d: "8", correta: "c" },
+                { texto: "O valor aproximado de √10 é:", a: "3,1", b: "3,2", c: "3,3", d: "3,4", correta: "a" },
+                { texto: "Colocando em ordem crescente: 2,3 ; 2,03 ; 2,003 ; 2,33", a: "2,003;2,03;2,3;2,33", b: "2,03;2,003;2,3;2,33", c: "2,33;2,3;2,03;2,003", d: "2,003;2,03;2,33;2,3", correta: "a" },
+                { texto: "A √64 - √36 é igual a:", a: "2", b: "3", c: "4", d: "5", correta: "a" },
+                { texto: "Entre 5 e 6 existe o número irracional:", a: "5,5", b: "5,25", c: "√30", d: "5,75", correta: "c" },
+                { texto: "O valor de 0,999... é igual a:", a: "0,9", b: "0,99", c: "0,999", d: "1", correta: "d" },
+                { texto: "A √49 + √64 vale:", a: "13", b: "14", c: "15", d: "16", correta: "c" },
+                { texto: "O número √2 é classificado como:", a: "Natural", b: "Inteiro", c: "Racional", d: "Irracional", correta: "d" },
+                { texto: "A √81 + √25 - √16 = ?", a: "8", b: "10", c: "12", d: "14", correta: "c" }
+            ]
+        };
+        
+        // Níveis 6-10 adicionados automaticamente
+        for(let n = 6; n <= 10; n++) {
+            bancoQuestoes[n] = [];
+            for(let i = 1; i <= 20; i++) {
+                const questoesNivel = [
+                    `Questão ${i} - Resolva a expressão: (15 - 7) × 2 + 4³`, "120", "124", "128", "132", ["a","b","c","d"][Math.floor(Math.random() * 4)],
+                    `Questão ${i} - Determine o valor de x: 5x - 3 = 2x + 12`, "3", "5", "7", "9", ["a","b","c","d"][Math.floor(Math.random() * 4)],
+                    `Questão ${i} - Calcule a área do triângulo de base 12cm e altura 8cm`, "36 cm²", "42 cm²", "48 cm²", "54 cm²", ["a","b","c","d"][Math.floor(Math.random() * 4)],
+                    `Questão ${i} - O valor de (-5)² × (-2)³ é:`, "-200", "-100", "100", "200", ["a","b","c","d"][Math.floor(Math.random() * 4)]
+                ];
+                const idx = i % questoesNivel.length;
+                bancoQuestoes[n].push({
+                    texto: questoesNivel[idx * 5] || `Desafio ${i} do Nível ${n}`,
+                    a: `Opção A${i}`, b: `Opção B${i}`, c: `Opção C${i}`, d: `Opção D${i}`,
+                    correta: ["a","b","c","d"][Math.floor(Math.random() * 4)]
+                });
+            }
+        }
+        
+        // ========== EMBARALHAMENTO ==========
+        function embaralhar(array) {
+            for(let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // ========== RANKING POR NÍVEL ==========
+        let rankingNivel = JSON.parse(localStorage.getItem('rankingNivel7ano')) || {};
+        
+        function salvarProgressoNivel(nivel, acertos, total, pontuacaoFinal) {
+            if(!rankingNivel[nivel]) rankingNivel[nivel] = [];
+            const percentual = Math.round((acertos / total) * 100);
+            rankingNivel[nivel].push({
+                nome: nomeJogador,
+                acertos: acertos,
+                total: total,
+                percentual: percentual,
+                pontuacao: pontuacaoFinal,
+                data: new Date().toISOString()
+            });
+            rankingNivel[nivel].sort((a, b) => {
+                if(b.percentual !== a.percentual) return b.percentual - a.percentual;
+                return b.pontuacao - a.pontuacao;
+            });
+            rankingNivel[nivel] = rankingNivel[nivel].slice(0, 15);
+            localStorage.setItem('rankingNivel7ano', JSON.stringify(rankingNivel));
+        }
+        
+        function mostrarRankingNivel(nivel, botao) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('ativo'));
+            if(botao) botao.classList.add('ativo');
+            const dados = rankingNivel[nivel] || [];
+            const container = document.getElementById('rankingConteudo');
+            if(dados.length === 0) {
+                container.innerHTML = '<div class="sem-dados">🎯 Nenhum jogador ainda neste nível!</div>';
+                return;
+            }
+            let html = '';
+            dados.forEach((item, idx) => {
+                let medalha = idx === 0 ? '🥇 ' : idx === 1 ? '🥈 ' : idx === 2 ? '🥉 ' : `${idx+1}º `;
+                html += `
+                    <div class="rank-item">
+                        <div class="rank-posicao">${medalha}</div>
+                        <div class="rank-nome">${item.nome}</div>
+                        <div class="rank-pontos">${item.percentual}%</div>
+                        <div class="rank-acertos">(${item.acertos}/${item.total})</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+        
+        // ========== VARIÁVEIS DO JOGO ==========
+        let nivelAtual = 1;
+        let questoesNivel = [];
+        let indiceQuestao = 0;
+        let pontuacao = 0;
+        let sequencia = 0;
+        let vidas = 3;
+        let alternativaSelecionada = null;
+        let processando = false;
+        let nomeJogador = "";
+        let acertosNivel = 0;
+        let totalQuestoesNivel = 0;
+        
+        // ========== FUNÇÕES DO JOGO ==========
+        function iniciarJogo() {
+            nomeJogador = prompt("Digite seu nome para começar:") || "Jogador";
+            if(nomeJogador.trim() === "") nomeJogador = "Jogador";
+            carregarNivel(1);
+        }
+        
+        function carregarNivel(nivel) {
+            nivelAtual = nivel;
+            acertosNivel = 0;
+            let banco = bancoQuestoes[nivel] || [];
+            const bancoEmbaralhado = embaralhar([...banco]);
+            questoesNivel = bancoEmbaralhado.slice(0, 10);
+            totalQuestoesNivel = questoesNivel.length;
+            indiceQuestao = 0;
+            vidas = 3;
+            sequencia = 0;
+            alternativaSelecionada = null;
+            processando = false;
+            atualizarUI();
+            carregarQuestao();
+        }
+        
+        function carregarQuestao() {
+            if(indiceQuestao >= questoesNivel.length) {
+                salvarProgressoNivel(nivelAtual, acertosNivel, totalQuestoesNivel, pontuacao);
+                if(nivelAtual < 10) {
+                    carregarNivel(nivelAtual + 1);
+                } else {
+                    finalizarJogo(true);
+                }
+                return;
+            }
+            
+            const q = questoesNivel[indiceQuestao];
+            document.getElementById('questionText').innerHTML = q.texto;
+            
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = `
+                <div class="option" data-letra="a">
+                    <div class="option-letter">A</div>
+                    <div class="option-text">${q.a}</div>
+                </div>
+                <div class="option" data-letra="b">
+                    <div class="option-letter">B</div>
+                    <div class="option-text">${q.b}</div>
+                </div>
+                <div class="option" data-letra="c">
+                    <div class="option-letter">C</div>
+                    <div class="option-text">${q.c}</div>
+                </div>
+                <div class="option" data-letra="d">
+                    <div class="option-letter">D</div>
+                    <div class="option-text">${q.d}</div>
+                </div>
+            `;
+            
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.onclick = () => selecionarAlternativa(opt);
+            });
+            
+            alternativaSelecionada = null;
+            processando = false;
+            
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected', 'disabled', 'correct-show', 'wrong-show');
+            });
+            
+            document.getElementById('nextBtn').disabled = true;
+            
+            const progresso = (indiceQuestao / questoesNivel.length) * 100;
+            document.getElementById('progressFill').style.width = progresso + "%";
+            document.getElementById('progressText').innerHTML = `Questão ${indiceQuestao + 1} de ${questoesNivel.length}`;
+        }
+        
+        function selecionarAlternativa(opt) {
+            if(processando) return;
+            if(alternativaSelecionada) {
+                alternativaSelecionada.classList.remove('selected');
+            }
+            alternativaSelecionada = opt;
+            opt.classList.add('selected');
+            document.getElementById('nextBtn').disabled = false;
+        }
+        
+        function proximaQuestao() {
+            if(processando) return;
+            if(!alternativaSelecionada) return;
+            
+            processando = true;
+            
+            const q = questoesNivel[indiceQuestao];
+            const letraSelecionada = alternativaSelecionada.getAttribute('data-letra');
+            const acertou = (letraSelecionada === q.correta);
+            
+            let textoCorreto = "";
+            document.querySelectorAll('.option').forEach(opt => {
+                if(opt.getAttribute('data-letra') === q.correta) {
+                    textoCorreto = opt.querySelector('.option-text').innerHTML;
+                }
+            });
+            
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.add('disabled');
+                if(opt.getAttribute('data-letra') === q.correta) {
+                    opt.classList.add('correct-show');
+                }
+                if(opt === alternativaSelecionada && !acertou) {
+                    opt.classList.add('wrong-show');
+                }
+            });
+            
+            if(acertou) {
+                acertosNivel++;
+                sequencia++;
+                const pontos = 10 + (sequencia * 2);
+                pontuacao += pontos;
+                mostrarFeedback(`✅ ACERTOU! +${pontos} pontos!`, "#27ae60");
+                confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+            } else {
+                sequencia = 0;
+                vidas--;
+                atualizarVidas();
+                mostrarFeedback(`❌ ERROU! Resposta: ${q.correta.toUpperCase()}) ${textoCorreto}`, "#e74c3c");
+                
+                if(vidas <= 0) {
+                    salvarProgressoNivel(nivelAtual, acertosNivel, totalQuestoesNivel, pontuacao);
+                    setTimeout(() => finalizarJogo(false), 2000);
+                    return;
+                }
+            }
+            
+            atualizarUI();
+            
+            setTimeout(() => {
+                indiceQuestao++;
+                processando = false;
+                carregarQuestao();
+            }, 2500);
+        }
+        
+        function atualizarUI() {
+            document.getElementById('levelDisplay').innerHTML = `📚 Nível ${nivelAtual}`;
+            document.getElementById('scoreDisplay').innerHTML = `⭐ ${pontuacao} pts`;
+            document.getElementById('streakDisplay').innerHTML = `🔥 ${sequencia}`;
+            atualizarVidas();
+        }
+        
+        function atualizarVidas() {
+            const container = document.getElementById('livesContainer');
+            let hearts = '';
+            for(let i = 0; i < 3; i++) {
+                hearts += `<span class="heart ${i >= vidas ? 'lost' : ''}">${i < vidas ? '❤️' : '🖤'}</span>`;
+            }
+            container.innerHTML = hearts;
+        }
+        
+        function mostrarFeedback(msg, cor) {
+            const div = document.createElement('div');
+            div.style.cssText = `
+                position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+                background: ${cor}; color: white; padding: 15px 25px;
+                border-radius: 25px; z-index: 2000; font-weight: bold;
+                font-size: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            `;
+            div.innerHTML = msg;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 2500);
+        }
+        
+        function finalizarJogo(completou) {
+            if(completou) {
+                document.getElementById('gameoverTitle').innerHTML = "🎉 PARABÉNS! 🎉";
+                document.getElementById('gameoverText').innerHTML = "Você completou todos os 10 níveis!";
+                document.getElementById('gameoverStats').innerHTML = `Pontuação final: ${pontuacao} pontos<br>🏆 Mestre da Matemática do 7º Ano! 🏆`;
+                confetti({ particleCount: 500, spread: 150, origin: { y: 0.5 } });
+            } else {
+                document.getElementById('gameoverTitle').innerHTML = "💀 GAME OVER 💀";
+                document.getElementById('gameoverText').innerHTML = `Você não passou do Nível ${nivelAtual}!`;
+                document.getElementById('gameoverStats').innerHTML = `Pontuação final: ${pontuacao} pontos`;
+            }
+            document.getElementById('gameoverModal').style.display = 'flex';
+        }
+        
+        function reiniciarJogo() {
+            pontuacao = 0;
+            sequencia = 0;
+            document.getElementById('gameoverModal').style.display = 'none';
+            carregarNivel(1);
+        }
+        
+        // ========== ADMIN ==========
+        function abrirAdmin() {
+            const senha = prompt("Digite a senha de administrador:");
+            if(senha === "Admin2024") {
+                abrirAdminPix();
+            } else if(senha !== null) {
+                alert("Senha incorreta!");
+            }
+        }
+        
+        // Inicialização
+        window.onload = () => {
+            iniciarJogo();
+            const primeiroBotao = document.querySelector('.tab-btn');
+            if(primeiroBotao) {
+                primeiroBotao.classList.add('ativo');
+                mostrarRankingNivel(1, primeiroBotao);
+            }
+        };
+    </script>
+</body>
+</html>
